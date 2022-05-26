@@ -1,4 +1,4 @@
-import { collection, CollectionReference, getDoc, Timestamp } from 'firebase/firestore';
+import { collection, CollectionReference, doc, getDoc, Timestamp } from 'firebase/firestore';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { FireDocument } from '../src/lib';
@@ -14,8 +14,8 @@ interface UserData {
 }
 interface UserDoc extends UserData {}
 class UserDoc extends FireDocument<UserData> {
-  static create(collection: UsersCollection, data: UserData) {
-    return new UserDoc(this.makeConstructorInput(collection, null, data));
+  static create(collection: UsersCollection, id, data: UserData) {
+    return new UserDoc(this.makeConstructorInput(collection, id, data));
   }
 }
 
@@ -36,14 +36,14 @@ afterAll(async () => {
 
 describe('Document', () => {
   it('create and save', async () => {
-    const user = await UserDoc.create(usersCollection, {
+    const user = await UserDoc.create(usersCollection, '1', {
       name: 'Taro',
       createdAt: Timestamp.now(),
     });
 
     await user.save();
 
-    const gotUser = await getDoc(user.ref);
+    const gotUser = await getDoc(doc(usersRef, '1'));
 
     expect(gotUser.data()).toStrictEqual(user.data);
   });
