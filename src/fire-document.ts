@@ -36,7 +36,7 @@ export class FireDocument<TData> {
     return [this.ref, this.data] as const;
   }
 
-  static makeCreateInput<TData>(
+  static makeConstructorInput<TData>(
     collection: { ref: CollectionReference<TData> },
     id: null | string,
     data: TData
