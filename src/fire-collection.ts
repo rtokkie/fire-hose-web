@@ -1,12 +1,4 @@
-import {
-  CollectionReference,
-  doc,
-  DocumentReference,
-  getDoc,
-  getDocs,
-  Query,
-  query,
-} from 'firebase/firestore';
+import { CollectionReference, doc, getDoc, getDocs, Query, query } from 'firebase/firestore';
 
 import { FireDocumentInput } from './fire-document';
 
@@ -27,8 +19,8 @@ export class FireCollection<TData, TTransformed> {
     if (!snap.exists() || !snap.data()) throw new Error("Can't findOne");
     return this.transformer({
       id: snap.id,
-      ref: snap.ref as DocumentReference<TData>,
-      data: () => snap.data() as TData,
+      ref: snap.ref,
+      data: () => snap.data(),
     });
   }
 
@@ -37,8 +29,8 @@ export class FireCollection<TData, TTransformed> {
     if (!snap.exists() || !snap.data()) return undefined;
     return this.transformer({
       id: snap.id,
-      ref: snap.ref as DocumentReference<TData>,
-      data: () => snap.data() as TData,
+      ref: snap.ref,
+      data: () => snap.data(),
     });
   }
 
