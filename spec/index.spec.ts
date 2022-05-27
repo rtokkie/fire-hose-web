@@ -7,7 +7,6 @@ import {
   orderBy,
   query,
   setDoc,
-  where,
   writeBatch,
 } from 'firebase/firestore';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
