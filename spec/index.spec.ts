@@ -1,4 +1,15 @@
-import { collection, CollectionReference, doc, getDoc, writeBatch } from 'firebase/firestore';
+import {
+  collection,
+  CollectionReference,
+  doc,
+  documentId,
+  getDoc,
+  orderBy,
+  query,
+  setDoc,
+  where,
+  writeBatch,
+} from 'firebase/firestore';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { FireDocument } from '../src/lib';
@@ -99,14 +110,64 @@ describe('Document', () => {
   });
 });
 
-describe.skip('Collection', () => {
-  it('findOne');
-  it('findOneById');
-  it('findManyByQuery');
+describe('Collection', () => {
+  beforeEach(async () => {
+    await setDoc(doc(usersRef, '1'), { name: 'Ant Man' });
+    await setDoc(doc(usersRef, '2'), { name: 'Bird Man' });
+    await setDoc(doc(usersRef, '3'), { name: 'Cat Man' });
+  });
+
+  it('findOne', async () => {
+    const user = await usersCollection.findOne('1');
+
+    const { id, ref, postsCollection, ...data } = user;
+
+    expect(id).toBe('1');
+    expect(ref).toStrictEqual(doc(usersRef, '1'));
+    expect(data).toStrictEqual({ name: 'Ant Man' });
+
+    await expect(usersCollection.findOne('1_000')).rejects.toThrowError();
+  });
+
+  it('findOneById', async () => {
+    const user = await usersCollection.findOneById('1');
+
+    expect(user.name).toStrictEqual('Ant Man');
+
+    await expect(usersCollection.findOneById('1_000')).resolves.toBe(undefined);
+  });
+
+  it('findManyByQuery', async () => {
+    const users = await usersCollection.findManyByQuery((ref) =>
+      query(ref, orderBy('name', 'desc'))
+    );
+
+    expect(users.map((u) => u.name)).toStrictEqual(['Cat Man', 'Bird Man', 'Ant Man']);
+  });
 });
 
-describe.skip('Sub Collection', () => {
-  it('findOne');
-  it('findOneById');
-  it('findManyByQuery');
+describe('Sub Collection', () => {
+  let user: UserDoc;
+  beforeEach(async () => {
+    user = await UserDoc.create(usersCollection, '1', { name: 'Taro' }).save();
+
+    await PostDoc.create(user.postsCollection, '1', { content: 'I ate lunch box.' }).save();
+    await PostDoc.create(user.postsCollection, '2', { content: 'I played baseball.' }).save();
+  });
+
+  it('findOne', async () => {
+    const post = await user.postsCollection.findOne('1');
+
+    expect(post.content).toBe('I ate lunch box.');
+
+    await expect(user.postsCollection.findOne('1_000')).rejects.toThrowError();
+  });
+
+  it('findManyByQuery', async () => {
+    const posts = await user.postsCollection.findManyByQuery((ref) =>
+      query(ref, orderBy(documentId()))
+    );
+
+    expect(posts.map((p) => p.content)).toStrictEqual(['I ate lunch box.', 'I played baseball.']);
+  });
 });
