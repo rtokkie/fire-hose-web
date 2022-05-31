@@ -11,8 +11,7 @@ import {
 } from 'firebase/firestore';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { FireDocument } from '../src/lib';
-import { FireCollection } from '../src/lib';
+import { FireCollection, FireDocument } from '../src/lib';
 import { getDb } from './test-setup';
 import { clearFirestore } from './test-utils';
 
@@ -131,7 +130,7 @@ describe('Collection', () => {
   it('findOneById', async () => {
     const user = await usersCollection.findOneById('1');
 
-    expect(user.name).toStrictEqual('Ant Man');
+    expect(user?.name).toStrictEqual('Ant Man');
 
     await expect(usersCollection.findOneById('1_000')).resolves.toBe(undefined);
   });
