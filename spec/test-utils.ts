@@ -10,7 +10,6 @@ export const sleep = (ms = 0) =>
     }, ms)
   );
 
-// SEE: https://gist.github.com/gordonbrander/2230317
 export const id = () => {
   return '_' + Math.random().toString(36).substr(2, 9);
 };

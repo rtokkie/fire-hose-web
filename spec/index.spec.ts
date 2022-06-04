@@ -9,9 +9,9 @@ import {
   setDoc,
   writeBatch,
 } from 'firebase/firestore';
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { FireCollection, FireDocument } from '../src/lib';
+import { FireCollection, FireDocument } from '@/index';
+
 import { getDb } from './test-setup';
 import { clearFirestore } from './test-utils';
 
@@ -22,7 +22,7 @@ interface UserData {
 interface UserDoc extends UserData {}
 class UserDoc extends FireDocument<UserData> {
   // NOTE: Sub Collection
-  postsCollection = new PostCollection(collection(this.ref, 'posts'));
+  postsCollection = new PostsCollection(collection(this.ref, 'posts'));
 
   static create(collection: UsersCollection, id: string | null, data: UserData) {
     return new UserDoc(this.makeConstructorInput(collection, id, data));
@@ -34,7 +34,7 @@ interface PostData {
 }
 interface PostDoc extends PostData {}
 class PostDoc extends FireDocument<PostData> {
-  static create(collection: PostCollection, id: string | null, data: PostData) {
+  static create(collection: PostsCollection, id: string | null, data: PostData) {
     return new PostDoc(this.makeConstructorInput(collection, id, data));
   }
 }
@@ -46,7 +46,7 @@ class UsersCollection extends FireCollection<UserData, UserDoc> {
   }
 }
 
-class PostCollection extends FireCollection<PostData, PostDoc> {
+class PostsCollection extends FireCollection<PostData, PostDoc> {
   constructor(ref: CollectionReference) {
     super(ref, (snap) => new PostDoc(snap));
   }
