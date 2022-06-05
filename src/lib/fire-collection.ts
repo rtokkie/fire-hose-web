@@ -1,13 +1,4 @@
-import {
-  collectionGroup,
-  CollectionReference,
-  doc,
-  getDoc,
-  getDocs,
-  Query,
-  query,
-  where,
-} from 'firebase/firestore';
+import { CollectionReference, doc, getDoc, getDocs, Query, query, where } from 'firebase/firestore';
 
 import { FireDocumentInput } from './fire-document';
 
