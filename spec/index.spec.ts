@@ -1,16 +1,19 @@
 import {
   collection,
+  collectionGroup,
   CollectionReference,
   doc,
   documentId,
   getDoc,
   orderBy,
+  Query,
   query,
   setDoc,
+  where,
   writeBatch,
 } from 'firebase/firestore';
 
-import { FireCollection, FireDocument } from '@/index';
+import { FireCollection, FireCollectionGroup, FireDocument } from '@/index';
 
 import { getDb } from './test-setup';
 import { clearFirestore } from './test-utils';
@@ -30,6 +33,7 @@ class UserDoc extends FireDocument<UserData> {
 }
 
 interface PostData {
+  __id: string;
   content: string;
 }
 interface PostDoc extends PostData {}
@@ -52,9 +56,17 @@ class PostsCollection extends FireCollection<PostData, PostDoc> {
   }
 }
 
+class PostsCollectionGroup extends FireCollectionGroup<PostData, PostDoc> {
+  constructor(ref: Query) {
+    super(ref, '__id', (snap) => new PostDoc(snap));
+  }
+}
+
 // NOTE: Root Collections
 const usersRef = collection(getDb(), 'users');
+const postsRefGroup = collectionGroup(getDb(), 'posts');
 const usersCollection = new UsersCollection(usersRef);
+const postsCollectionGroup = new PostsCollectionGroup(postsRefGroup);
 
 beforeEach(async () => {
   await clearFirestore();
@@ -149,8 +161,14 @@ describe('Sub Collection', () => {
   beforeEach(async () => {
     user = await UserDoc.create(usersCollection, '1', { name: 'Taro' }).save();
 
-    await PostDoc.create(user.postsCollection, '1', { content: 'I ate lunch box.' }).save();
-    await PostDoc.create(user.postsCollection, '2', { content: 'I played baseball.' }).save();
+    await PostDoc.create(user.postsCollection, '1', {
+      __id: '1',
+      content: 'I ate lunch box.',
+    }).save();
+    await PostDoc.create(user.postsCollection, '2', {
+      __id: '2',
+      content: 'I played baseball.',
+    }).save();
   });
 
   it('findOne', async () => {
@@ -167,5 +185,51 @@ describe('Sub Collection', () => {
     );
 
     expect(posts.map((p) => p.content)).toStrictEqual(['I ate lunch box.', 'I played baseball.']);
+  });
+});
+
+describe('Collection Group', () => {
+  let user: UserDoc;
+  beforeEach(async () => {
+    user = await UserDoc.create(usersCollection, '1', { name: 'Taro' }).save();
+
+    await PostDoc.create(user.postsCollection, '1', {
+      __id: '1',
+      content: 'I ate lunch box.',
+    }).save();
+    await PostDoc.create(user.postsCollection, '2', {
+      __id: '2',
+      content: 'I played baseball.',
+    }).save();
+  });
+
+  it('findOne', async () => {
+    const post = await postsCollectionGroup.findOne('1');
+
+    expect(post.content).toBe('I ate lunch box.');
+
+    await expect(postsCollectionGroup.findOne('1_000')).rejects.toThrowError();
+  });
+
+  it('findOneById', async () => {
+    const post = await postsCollectionGroup.findOneById('1');
+
+    expect(post?.content).toBe('I ate lunch box.');
+
+    await expect(postsCollectionGroup.findOneById('1_000')).resolves.toBe(undefined);
+  });
+
+  it('findManyByQuery', async () => {
+    const posts = await postsCollectionGroup.findManyByQuery((ref) =>
+      query(ref, orderBy(documentId()))
+    );
+
+    expect(posts.map((p) => p.content)).toStrictEqual(['I ate lunch box.', 'I played baseball.']);
+
+    const [post] = await postsCollectionGroup.findManyByQuery((ref) =>
+      query(ref, where('content', '==', 'I played baseball.'))
+    );
+
+    expect(post.content).toBe('I played baseball.');
   });
 });
